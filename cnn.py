@@ -12,12 +12,15 @@ import numpy as np
 
 def creatmodel():
     mo = models.Sequential()
-    mo.add(layers.Conv2D(filters=3, kernel_size=[9, 9], activation='relu', padding='same', input_shape=[46, 120,3]))
-    #mo.add(layers.MaxPooling2D(pool_size=(2,2),padding='same'))
-    mo.add(layers.Dense(units=64*64, activation='relu',trainable='true'))
-    mo.add(layers.Dense(units=32*32, activation='relu',trainable='true'))
-    mo.add(layers.Dense(units=19*19, activation='relu',trainable='true'))
-    mo.add(layers.Dense(units=4, activation='relu',trainable='true'))
+    mo.add(layers.Conv2D(filters=5,strides=[4,4], kernel_size=[9, 9], activation='relu', padding='same', input_shape=[46, 120,3]))
+    mo.add(layers.MaxPooling2D(pool_size=(2,2),strides=[2,2],padding='same'))
+    mo.add(layers.Conv2D(filters=10,strides=[2,2], kernel_size=[4, 4], activation='relu', padding='same', input_shape=[46, 120,3]))
+    mo.add(layers.MaxPooling2D(pool_size=(2,2),strides=[2,2],padding='same'))
+    mo.add(layers.Flatten())
+    mo.add(layers.Dense(units=40, activation='relu',trainable='true'))
+    mo.add(layers.Dense(units=20, activation='relu',trainable='true'))
+    mo.add(layers.Dense(units=10,activation="softmax" ))
+
     #mo.add(layers.Conv2D(filters=19,kernel_size=[1,1], activation='relu'))
     mo.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
     print(mo.summary())
