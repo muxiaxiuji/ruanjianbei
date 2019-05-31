@@ -13,12 +13,12 @@ import random
 
 print("1")
 model=models.load_model("m1测.h5")
-dir="E:\快凉凉的软件杯\imgs"
+dir="C:\\Users\\fyx\\Desktop\\资料下载\\images\\"
 for i in range(0,100):
     s=input()
     s=dir+"\\"+s
     img = mpimg.imread(s)
-    img=np.asarray([img])
+    img=np.asarray([img[:,48:96,:]])
     print(img.shape)
     res=model.predict(img)
     res=res[0]
