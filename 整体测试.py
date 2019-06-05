@@ -62,25 +62,18 @@ lis=os.listdir(dir)
 ac=0
 tot=0
 for name in lis:
-    if name[0]=='_':
-        continue
     tot+=1
-    img = cv2.imread(dir+"\\"+name)
-    img = trans(img[:,0:30,:])
-    timg=img
-    img=np.asarray([img])
-    res=model.predict(img)
-    res=res[0]
-    #print(res)
-    ans=judge(res)
-    if str(ans)!=name[0]:
-        #print(str(ans))
-        """
-        plt.imshow(timg)
-        plt.show()
-        """
-        #show(timg)
-    else:
+    seq=[]
+    s=dir+"\\"+name
+    img = cv2.imread(s)
+    for i in range(0,4):
+        seq.append(trans(img[:,i*30:i*30+30,:]))
+    res=model.predict(np.asarray(seq))
+    cnt=0
+    for i in range(0,4):
+        if str(judge(res[i]))==name[i] or name[i]=='_':
+            cnt+=1
+    if cnt==4:
         ac+=1
 print(ac/tot)
 
