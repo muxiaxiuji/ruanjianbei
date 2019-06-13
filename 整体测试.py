@@ -23,7 +23,10 @@ def judge(res):
             max=j
             ans=i
         i+=1
-    return ans
+    if ans==10:
+        return "_"
+    else:
+        return str(ans)
 model=models.load_model("m1测.h5")
 dir=r"C:\Users\fyx\Desktop\ruanjianbei\images"
 lis=os.listdir(dir)
@@ -34,12 +37,13 @@ for name in lis:
     seq=[]
     s=dir+"\\"+name
     img = cv2.imread(s)
+    #img=cv2.resize(img,(46,120))
     for i in range(0,4):
         seq.append(pp.trans(img[:,i*30:i*30+30,:]))
     res=model.predict(np.asarray(seq))
     cnt=0
     for i in range(0,4):
-        if str(judge(res[i]))==name[i] or name[i]=='_':
+        if str(judge(res[i]))==name[i]:
             cnt+=1
     if cnt==4:
         ac+=1

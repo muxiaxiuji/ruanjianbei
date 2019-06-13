@@ -23,15 +23,16 @@ def judge(res):
             max=j
             ans=i
         i+=1
-    return ans
+    if ans==10:
+        return "_"
+    else:
+        return str(ans)
 model=models.load_model("m1测.h5")
 dir=r"C:\Users\fyx\Desktop\ruanjianbei\images"
 lis=os.listdir(dir)
 ac=0
 tot=0
 for name in lis:
-    if name[0]=='_':
-        continue
     tot+=1
     img = cv2.imread(dir+"\\"+name)
     rawimg=img[:, 0:30, :]

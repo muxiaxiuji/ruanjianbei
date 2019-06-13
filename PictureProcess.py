@@ -42,9 +42,7 @@ def trans(img):
                         sq.append(minus(img[i, j], img[x, y]))
             sq.sort(reverse=True)
             newimg[i, j] = (int(sq[0])+int(sq[1]))/2
-
-    #newimg = cv2.morphologyEx(newimg, cv2.MORPH_OPEN, np.ones((1,1),np.uint8))
-    return newimg.reshape([size[0], size[1], 1])
+    return newimg.reshape([size[0], size[1], 1]).astype(np.float32)
 
 
 def threshold(img):

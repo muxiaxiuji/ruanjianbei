@@ -3,7 +3,8 @@ import numpy as np
 import cv2
 from keras.models import *
 from keras.layers import *
-
+from DataProcess import DataGenerator
+from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras import regularizers
 import os
 import PictureProcess as pp
@@ -13,53 +14,13 @@ import random
 
 size = [46, 30, 1]
 
+
 def ctc_lambda_func(args):
     y_pred, labels, input_length, label_length = args
     return K.ctc_batch_cost(labels, y_pred, input_length, label_length)
 
 
 def creatmodel():
-    """
-    mo = models.Sequential()
-    mo.add(layers.Input(shape=(46,None,1)))
-    mo.add(layers.Conv2D(filters=32, strides=[1, 1], kernel_size=[3, 3], padding='same'))
-    mo.add(layers.BatchNormalization())
-    mo.add(layers.Activation("relu"))
-    mo.add(layers.Conv2D(filters=32, strides=[1, 1], kernel_size=[3, 3], padding='same'))
-    mo.add(layers.BatchNormalization())
-    mo.add(layers.Activation("relu"))
-    mo.add(layers.MaxPooling2D(pool_size=(2, 2), strides=[2, 2], padding='same'))
-
-    mo.add(layers.Conv2D(filters=64, strides=[1, 1], kernel_size=[3, 3], padding='same'))
-    mo.add(layers.BatchNormalization())
-    mo.add(layers.Activation("relu"))
-    mo.add(layers.Conv2D(filters=64, strides=[1, 1], kernel_size=[3, 3], padding='same'))
-    mo.add(layers.BatchNormalization())
-    mo.add(layers.Activation("relu"))
-    mo.add(layers.MaxPooling2D(pool_size=(2, 2), strides=[2, 2], padding='same'))
-
-    mo.add(layers.Conv2D(filters=128, strides=[1, 1], kernel_size=[3, 3], padding='same'))
-    mo.add(layers.BatchNormalization())
-    mo.add(layers.Activation("relu"))
-    mo.add(layers.Conv2D(filters=128, strides=[1, 1], kernel_size=[3, 3], padding='same'))
-    mo.add(layers.BatchNormalization())
-    mo.add(layers.Activation("relu"))
-    mo.add(layers.MaxPooling2D(pool_size=(2, 2), strides=[2, 2], padding='same'))
-
-    mo.add(layers.Permute((2,1,3)))
-    mo.add(layers.TimeDistributed(layers.Flatten()))
-    mo.add(layers.Bidirectional(layers.GRU(256,return_sequences=True)))
-    mo.add(layers.Dense(units=256, activation='linear', trainable='true'))
-    mo.add(layers.Bidirectional(layers.GRU(256,return_sequences=True)))
-    mo.add(layers.Dense(units=11, activation='softmax', trainable='true'))
-
-
-
-    # mo.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
-    mo.compile(optimizer="Adam", loss='categorical_crossentropy', metrics=['accuracy'])
-    print(mo.summary())
-    return mo
-    """
     input = Input(shape=(46, None, 1), name='the_input', dtype='float32')
     m = Conv2D(32, kernel_size=(3, 3), padding='same', name='conv1')(input)
     m = BatchNormalization(axis=1)(m)
@@ -109,56 +70,24 @@ def creatmodel():
     return mo, basemodel
 
 
-def vectorize_sequences(sequences, dimension=11):
-    results = np.zeros((len(sequences), dimension))
-    print(results.shape)
-    for i, sequence in enumerate(sequences):
-        print(i)
-        print(sequence)
-        if sequence == "_":
-            num = 10
-        else:
-            num = int(sequence)
-        # print (type(sequence))
-        results[i, num] = 1.
-    return results
-
-
 model, base = creatmodel()
 # 此时 lena 就已经是一个 np.array 了，可以对它进行任意处理
-dir = r"C:\Users\fyx\Desktop\ruanjianbei\images"
-lis = os.listdir(dir)
-random.shuffle(lis)
-limit = 1000
-a = []
-sequence = ""
-for i in range(0, limit):
-    name = lis[i]
-    wh = random.randint(0, 3)
-    #while name[wh] == "_":
-    #    wh = random.randint(0, 3)
-    sequence = sequence + name[wh]
-    img = cv2.imread(dir + '\\' + name)
-    #show(img)
-    img = pp.trans(img[:, wh * 30:(wh + 1) * 30, :])
-    #img = pp.threshold(img)
-    #pp.show(img)
-    a.append(img)
-print(sequence)
-tags = vectorize_sequences(sequence, dimension=11)
-a = np.asarray(a)
-print(a.shape)
-x_val = a[:100]
-partial_x_train = a[100:]
-y_val = tags[:100]
-partial_y_train = tags[100:]
-history = model.fit(partial_x_train, partial_y_train, epochs=600, batch_size=300, validation_data=(x_val, y_val))
-# model.predict()
-# history = model.fit(partial_x_train, partial_y_train, epochs=300,batch_size=512,validation_data=(x_val, y_val))
-# model.save("m测.h5")
-# plt.imshow(lena) # 显示图片
-# plt.axis('off') # 不显示坐标轴
-# plt.show()
+tdir = r"C:\Users\fyx\Desktop\ruanjianbei\images"
+vdir = r"C:\Users\fyx\Desktop\ruanjianbei\images"
+traindata = DataGenerator(tdir, [46, 120], 300)
+traindata.build_data()
+valdata = DataGenerator(vdir, [46, 120], 300)
+valdata.build_data()
+
+early_stop = EarlyStopping(monitor='loss', min_delta=0.001, patience=4, mode='min', verbose=1)
+checkpoint = ModelCheckpoint(filepath='crnn--{epoch:02d}--{val_loss:.3f}.hdf5', monitor='loss', verbose=1, mode='min',
+                             period=1)
+history = model.fit_generator(generator=traindata.next_batch(),
+                              steps_per_epoch=int(traindata.n / traindata.batch_size),
+                              epochs=30,
+                              callbacks=[checkpoint],
+                              validation_data=valdata.next_batch(),
+                              validation_steps=int(valdata.n / valdata.batch_size))
 
 import matplotlib.pyplot as plt
 
